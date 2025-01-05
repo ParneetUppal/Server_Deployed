@@ -1,0 +1,12 @@
+﻿# Set the date for logging$Date = Get-Date -Format "yyyy-MM-dd_HH-mm-ss"# Initialize an empty array for output$Output = @()# Query your virtual machines (replace with the actual machine names if needed)$Servers = @("UParneetDC1", "UParneetDM1") # Replace VM1 and VM2 with the actual machine names# Iterate through the server listforeach ($Server in $Servers) {    # Check if the server is reachable    if (Test-Connection -BufferSize 32 -Count 1 -ComputerName $Server -Quiet) {        # Gather system information using Invoke-Command        $SystemInfo = Invoke-Command -ComputerName $Server -ScriptBlock {            # Collect various system information            $Processes = Get-Process | Out-String            $EnvVars = Get-ChildItem -Path Env: | Out-String            $Processor = Get-WmiObject Win32_Processor | Out-String            $ComputerSystem = Get-WmiObject Win32_ComputerSystem | Out-String            $LogicalDisks = Get-WmiObject -Class Win32_LogicalDisk | Out-String            $Shares = Get-WmiObject Win32_Share | Out-String            $NetworkConfig = Get-WmiObject Win32_NetworkAdapterConfiguration | Out-String            # Return gathered data as a custom object with readable strings            [PSCustomObject]@{                Processes     = $Processes                Environment   = $EnvVars                Processor     = $Processor                ComputerSystem = $ComputerSystem                LogicalDisks  = $LogicalDisks                Shares        = $Shares                NetworkConfig = $NetworkConfig            }        }        # Format the output for each server
+        $FormattedOutput = "Server: $Server`nDate Queried: $Date`n"
+        $FormattedOutput += "Processes:`n$($SystemInfo.Processes)`n"
+        $FormattedOutput += "Environment Variables:`n$($SystemInfo.Environment)`n"
+        $FormattedOutput += "Processor Info:`n$($SystemInfo.Processor)`n"
+        $FormattedOutput += "Computer System Info:`n$($SystemInfo.ComputerSystem)`n"
+        $FormattedOutput += "Logical Disks:`n$($SystemInfo.LogicalDisks)`n"
+        $FormattedOutput += "Shares:`n$($SystemInfo.Shares)`n"
+        $FormattedOutput += "Network Configuration:`n$($SystemInfo.NetworkConfig)`n"
+
+        # Add the formatted server information to the output array
+        $Output += $FormattedOutput    }}# Output the collected information to a file$Output | Out-File -FilePath "C:\OUTPUTFILE_$Date.txt"
